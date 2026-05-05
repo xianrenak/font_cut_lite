@@ -3,20 +3,66 @@ Font Cut Lite
 
 Forked from https://github.com/fabienbk/fontcutter.
 
-A small HTML5 tool (hosted here: http://fontcutter.fbksoft.com for convenience, but you can just open index.html offline) to easily generate Angel Code Font files (format [documentation here](http://www.angelcode.com/products/bmfont/doc/file_format.html)) for fixed-sized font sheets. This format is used in many game frameworks, like libgdx and several Unity3D plugins, and probably many many other ones.
+Font Cut Lite is a local HTML5 tool for generating AngelCode bitmap font descriptors from an existing fixed-grid bitmap font image. It can export both plain `.fnt` text and XML descriptors for use in game engines and UI pipelines.
 
-![screenshot](http://fbksoft.com/wp-content/uploads/2014/05/Sans-titre-1024x494.png)
+## Main Features
 
-Most tools available allow you to generate these descriptors by rasterizing true type fonts (like Hiero or Bitmap Font Generator), but I couldn't find any simple way to quickly generate this file, when you start with an existing bitmap sheet.
+- Load a bitmap font sheet from a file picker or a URL query parameter.
+- Configure fixed cell size with `Char Width` and `Char Height`.
+- Enter glyph rows manually, including intentional spaces with preserved leading/trailing whitespace.
+- Preview each glyph cell with visible labels for spaces.
+- Adjust per-character `xadvance` from the Preview tab with an inline slider.
+- Automatically calculate centered `xoffset` from `xadvance`.
+- Persist editor state in `localStorage` so refreshes keep glyph rows, dimensions, padding, output type, and metrics.
+- Run fully locally with vendored browser dependencies.
 
-### How to use
+## Running Locally
 
-It's really straightforward. Click on "open an image", tweak the char width and height until the grid match perfectly the letters in the image. Then manually write down the glyphs. Click on "preview" to check everything is fine. Once you're satisfied with the result, simply click on "ouput", and copy paste the result in a new fnt file.
+Open `index.html` directly, or serve the folder for query-parameter image loading:
 
-More info here: http://fbksoft.com/easy-angelcode-generation-from-existing-bitmaps/
+```sh
+python3 -m http.server 8000
+```
 
+Then open:
 
+```text
+http://localhost:8000/
+```
 
+To auto-load a served image:
 
+```text
+http://localhost:8000/?image=tests/assets/comic_font_img.png
+```
 
+Use `?reset=1&image=...` when you want to clear saved editor state before loading a test image.
 
+## Test Asset
+
+The repository includes a sample bitmap font at:
+
+```text
+tests/assets/comic_font_img.png
+```
+
+Suggested settings for this image:
+
+```text
+Char Width: 144
+Char Height: 196
+Text Lines: 8
+```
+
+Suggested glyph rows:
+
+```text
+ABCDEFGHIJKLM
+NOPQRSTUVWXYZ
+abcdefghijklm
+nopqrstuvwxyz
+0123456789 
+!@#$%^&*()?
++-=_|/\<>~
+[]{};:'"`,.
+```

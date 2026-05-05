@@ -1,0 +1,13 @@
+.DS_Store
+Thumbs.db
+
+# Local editor and OS noise
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Runtime scratch files
+*.log
+tmp/
+temp/
