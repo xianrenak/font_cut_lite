@@ -21,20 +21,17 @@ fontcutterApp.controller('fontcutterCtrl', function ($scope) {
     {'line': 3, 'glyphs' : "0123456789", 'metrics' : {} },
   ];
   $scope.lineNumber = $scope.lineData.length;
+  $scope.glyphText = lineDataToGlyphText($scope.lineData);
   $scope.selectedGlyph = null;
 
   loadSavedState($scope);
 
-  $scope.onLineNumberChange = function() {
-    if ($scope.lineNumber < $scope.lineData.length) {
-        $scope.lineData.splice($scope.lineNumber, $scope.lineData.length - $scope.lineNumber + 1);            
-    }
-    else if ($scope.lineNumber > $scope.lineData.length) {
-        var linesToAdd = $scope.lineNumber - $scope.lineData.length;
-        for (var i = 0; i < linesToAdd; i++) {
-            $scope.lineData.push({'line' : $scope.lineData.length + 1, 'glyphs' : '', 'metrics' : {}});
-        }
-    }    
+  $scope.onGlyphTextChange = function() {
+    $scope.lineData = glyphTextToLineData($scope.glyphText, $scope.lineData);
+    $scope.lineNumber = $scope.lineData.length;
+    clearInvalidSelection($scope);
+    canvasManager.refresh();
+    saveState($scope);
   }
 
   $scope.selectGlyph = function(lineIndex, charIndex) {
@@ -61,7 +58,7 @@ fontcutterApp.controller('fontcutterCtrl', function ($scope) {
     generateOutput();
   }
 
-  var properties = ["outputXML", "lineNumber", "charWidth", "charHeight", "topPadding", "bottomPadding", "leftPadding", "rightPadding"];
+  var properties = ["outputXML", "charWidth", "charHeight", "topPadding", "bottomPadding", "leftPadding", "rightPadding"];
   for (var i = properties.length - 1; i >= 0; i--) {
     $scope.$watch(properties[i], function() {
       canvasManager.refresh();
@@ -113,6 +110,7 @@ function loadSavedState($scope) {
         }
       }
       $scope.lineNumber = $scope.lineData.length;
+      $scope.glyphText = state.glyphText || lineDataToGlyphText($scope.lineData);
     }
 
     if (state.fileName) {
@@ -134,12 +132,49 @@ function saveState($scope) {
     bottomPadding: $scope.bottomPadding,
     leftPadding: $scope.leftPadding,
     rightPadding: $scope.rightPadding,
+    glyphText: $scope.glyphText,
     lineData: $scope.lineData,
     fileName: fileName ? fileName.name : "",
     imagePath: imagePath
   };
 
   localStorage.setItem(storageKey, JSON.stringify(state));
+}
+
+function lineDataToGlyphText(lineData) {
+  var lines = [];
+  for (var i = 0; i < lineData.length; i++) {
+    lines.push(lineData[i].glyphs);
+  }
+
+  return lines.join("\n");
+}
+
+function glyphTextToLineData(glyphText, oldLineData) {
+  var lines = String(glyphText || "").replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
+  var lineData = [];
+
+  for (var i = 0; i < lines.length; i++) {
+    var oldLine = oldLineData[i] || {};
+    lineData.push({
+      'line': i + 1,
+      'glyphs': lines[i],
+      'metrics': oldLine.metrics || {}
+    });
+  }
+
+  return lineData;
+}
+
+function clearInvalidSelection($scope) {
+  if (!$scope.selectedGlyph) {
+    return;
+  }
+
+  var line = $scope.lineData[$scope.selectedGlyph.lineIndex];
+  if (!line || $scope.selectedGlyph.charIndex >= line.glyphs.length) {
+    $scope.selectedGlyph = null;
+  }
 }
 
 function getQueryParameter(name) {

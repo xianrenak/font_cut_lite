@@ -46,10 +46,6 @@
 	flex: 0 0 86px;
 }
 
-.output-field {
-	flex-basis: 72px;
-}
-
 .option-field label {
 	display: block;
 	min-height: 34px;
@@ -58,6 +54,44 @@
 .option-field .form-control {
 	min-width: 72px;
 	width: 72px;
+}
+
+.glyph-text-field {
+	margin-top: 8px;
+}
+
+.glyph-text-field label {
+	display: block;
+}
+
+.glyph-text-field textarea {
+	font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+	min-height: 180px;
+	white-space: pre;
+}
+
+#fixedFontTab {
+	position: relative;
+	padding-top: 8px;
+}
+
+.output-options {
+	position: absolute;
+	right: 0;
+	top: 8px;
+	display: flex;
+	gap: 14px;
+	align-items: center;
+}
+
+.output-options label {
+	font-weight: bold;
+	margin-bottom: 0;
+	white-space: nowrap;
+}
+
+.output-options input {
+	margin-right: 4px;
 }
 
 .label-small  {

@@ -43,16 +43,16 @@
 
 		<!-- Tab panes -->
 		<div class="tab-content">
-			<div id="fixedFontTab" class="tab-pane active"> 
-				<div class="row row-padded option-row">
-					<div class="option-field output-field">
-						<label for="output-fnt">FNT Output</label>
+			<div id="fixedFontTab" class="tab-pane active">
+				<div class="output-options">
+					<label>
 						<input type="radio" name="outputType" ng-model="outputXML" ng-value="false" />
-					</div>
-					<div class="option-field output-field">
-						<label for="output-xml">XML Output</label>
+						FNT Output
+					</label>
+					<label>
 						<input type="radio" name="outputType" ng-model="outputXML" ng-value="true" />
-					</div>
+						XML Output
+					</label>
 				</div>
 				<div class="row row-padded option-row">
 					<div class="option-field">
@@ -63,11 +63,6 @@
 						<label for="height">Char Height </label>
 						<input class="form-control" type="number" min="1" step="1"  ng-model="charHeight" /> 				
 					</div>
-					<div class="option-field">
-						<label for="linenumber">Text Lines</label>
-						<input class="form-control" id="linenumber" ng-model="lineNumber" type="number" min="1" step="1" value="2" ng-change="onLineNumberChange()" />
-					</div>
-
 					<div class="option-field">
 						<label for="height">Top Padding </label>
 						<input class="form-control" type="number" min="0" step="1"  ng-model="topPadding" /> 				
@@ -86,20 +81,10 @@
 					</div>
 				</div>
 				
-				<table class="table" id="lineTable">
-					<thead>
-						<tr>
-							<th>Line</th>
-							<th>List of glyphs</th>
-						</tr>
-					</thead>
-					<tbody>					
-						<tr ng-repeat="line in lineData">
-							<td width="20"><span>{{line.line}}</span></td>
-							<td><input class="form-control" type="text" value="{{line.glyphs}}" ng-model="line.glyphs" ng-trim="false"/></td>
-						</tr>
-					</tbody>
-				</table>			
+				<div class="glyph-text-field">
+					<label for="glyphText">List of glyphs</label>
+					<textarea id="glyphText" class="form-control" rows="8" ng-model="glyphText" ng-trim="false" ng-change="onGlyphTextChange()"></textarea>
+				</div>
 				
 			</div>
 

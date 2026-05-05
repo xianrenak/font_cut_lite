@@ -51,10 +51,9 @@ Suggested settings for this image:
 ```text
 Char Width: 144
 Char Height: 196
-Text Lines: 8
 ```
 
-Suggested glyph rows:
+Paste this glyph text into `List of glyphs`:
 
 ```text
 ABCDEFGHIJKLM
