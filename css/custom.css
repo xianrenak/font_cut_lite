@@ -2,6 +2,31 @@ body {
 	background: #24282d;
 	color: #e8edf2;
 	font-family: "Helvetica Neue", Arial, sans-serif;
+	scrollbar-color: #6f7882 #1c2025;
+	scrollbar-width: thin;
+}
+
+* {
+	scrollbar-color: #6f7882 #1c2025;
+}
+
+::-webkit-scrollbar {
+	height: 12px;
+	width: 12px;
+}
+
+::-webkit-scrollbar-track {
+	background: #1c2025;
+}
+
+::-webkit-scrollbar-thumb {
+	background: #6f7882;
+	border: 2px solid #1c2025;
+	border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+	background: #8b949e;
 }
 
 .container {
@@ -239,6 +264,7 @@ input[type="file"] {
 
 .preview-cell {
 	cursor: pointer;
+	position: relative;
 	text-align: center;
 	vertical-align: top !important;
 }
@@ -261,9 +287,13 @@ input[type="file"] {
 
 .metric-control-cell {
 	background-color: #aeb4bb;
-	margin-top: 8px;
 	min-width: 160px;
 	padding: 6px;
+	position: absolute;
+	top: 100%;
+	left: 50%;
+	transform: translateX(-50%);
+	z-index: 10;
 }
 
 .metric-control-cell label {
