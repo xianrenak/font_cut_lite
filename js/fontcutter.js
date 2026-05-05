@@ -22,7 +22,6 @@ fontcutterApp.controller('fontcutterCtrl', function ($scope) {
   ];
   $scope.lineNumber = $scope.lineData.length;
   $scope.selectedGlyph = null;
-  $scope.savedImageName = "";
 
   loadSavedState($scope);
 
@@ -31,7 +30,8 @@ fontcutterApp.controller('fontcutterCtrl', function ($scope) {
         $scope.lineData.splice($scope.lineNumber, $scope.lineData.length - $scope.lineNumber + 1);            
     }
     else if ($scope.lineNumber > $scope.lineData.length) {
-        for (var i = 0; i < ($scope.lineNumber - $scope.lineData.length); i++) {
+        var linesToAdd = $scope.lineNumber - $scope.lineData.length;
+        for (var i = 0; i < linesToAdd; i++) {
             $scope.lineData.push({'line' : $scope.lineData.length + 1, 'glyphs' : '', 'metrics' : {}});
         }
     }    
@@ -86,6 +86,11 @@ fontcutterApp.controller('fontcutterCtrl', function ($scope) {
 });
 
 function loadSavedState($scope) {
+  if (getQueryParameter("reset") === "1") {
+    localStorage.removeItem(storageKey);
+    return;
+  }
+
   var savedState = localStorage.getItem(storageKey);
   if (!savedState) {
     return;
@@ -113,7 +118,6 @@ function loadSavedState($scope) {
     if (state.fileName) {
       fileName = {name: state.fileName};
       imagePath = state.imagePath || "";
-      $scope.savedImageName = state.fileName;
     }
   } catch (e) {
     localStorage.removeItem(storageKey);
@@ -138,6 +142,18 @@ function saveState($scope) {
   localStorage.setItem(storageKey, JSON.stringify(state));
 }
 
+function getQueryParameter(name) {
+  var query = window.location.search.substring(1).split("&");
+  for (var i = 0; i < query.length; i++) {
+    var pair = query[i].split("=");
+    if (decodeURIComponent(pair[0]) === name) {
+      return decodeURIComponent(pair[1] || "");
+    }
+  }
+
+  return "";
+}
+
 function CanvasManager() {
   this.canvasId = 'imageCanvas';
   this.canvasContainerId = 'canvas-container',
@@ -148,11 +164,31 @@ function CanvasManager() {
 	var imageLoader = document.getElementById('imageLoader');
 	imageLoader.addEventListener('change', this.handleImage.bind(this), false);	
 
-  var imageReloader = document.getElementById('imageReloader');
-  imageReloader.addEventListener('click', function() {
-    imageLoader.click();
-  }, false);
+  this.loadImageFromUrl();
 }
+
+CanvasManager.prototype.loadImageFromUrl = function() {
+  var imageUrl = getQueryParameter("image");
+  if (!imageUrl) {
+    return;
+  }
+
+  var me = this;
+  image.onload = function() {
+    $('#jumbotron').hide();
+    $('#canvas-container').show();
+    me.canvas.width = image.width;
+    me.canvas.height = image.height;
+    me.refreshCanvas();
+
+    $('.nav li.disabled').find("a").attr("data-toggle", "tab");
+    $('.nav li.disabled').removeClass('disabled');
+  };
+
+  image.src = imageUrl;
+  imagePath = imageUrl;
+  fileName = {name: imageUrl.split('/').pop()};
+};
 
 CanvasManager.prototype.refresh = function() {
   if (fileName != "") {    
@@ -186,7 +222,6 @@ CanvasManager.prototype.handleImage = function(e) {
         };
 
         fileName = e.target.files[0];
-        angular.element($("#body")).scope().savedImageName = fileName.name;
         reader.readAsDataURL(fileName);
         $('#canvas-container').show();
     };
@@ -243,7 +278,7 @@ function generatePreview() {
     for (var j = 0; j < lineDataEntry.glyphs.length; j++) {
       var canvasId = "canvas_"+i+"_"+j;
       var selectedClass = isSelectedGlyph($scope, i, j) ? " selected-glyph" : "";
-      content += "<td class='preview-cell"+selectedClass+"' data-line='"+i+"' data-char='"+j+"'><div>"+lineDataEntry.glyphs[j]+"</div><canvas class='preview-canvas' id='"+canvasId+"'></canvas>";
+      content += "<td class='preview-cell"+selectedClass+"' data-line='"+i+"' data-char='"+j+"'><div>"+getGlyphLabel(lineDataEntry.glyphs[j])+"</div><canvas class='preview-canvas' id='"+canvasId+"'></canvas>";
       if (isSelectedGlyph($scope, i, j)) {
         content += "<div class='metric-control-cell'><label for='xadvance-preview'>X Advance: "+$scope.selectedGlyph.xadvance+"</label><input id='xadvance-preview' class='form-control preview-slider' type='range' min='0' max='"+getXAdvanceSliderMax($scope)+"' step='1' value='"+$scope.selectedGlyph.xadvance+"' /></div>";
       }
@@ -315,6 +350,23 @@ function parseMetricValue(value, fallback) {
 
 function getXAdvanceSliderMax($scope) {
   return $scope.charWidth;
+}
+
+function getGlyphLabel(character) {
+  if (character === " ") {
+    return "<span class='space-glyph-label'>Space</span>";
+  }
+
+  return escapeHtml(character);
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 function getGlyphMetric($scope, lineIndex, charIndex) {
