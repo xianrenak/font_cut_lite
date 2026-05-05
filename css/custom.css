@@ -1,0 +1,73 @@
+.fileUpload {
+	position: relative;
+	overflow: hidden;
+	margin: 10px;
+}
+.fileUpload input.upload {
+	position: absolute;
+	top: 0;
+	right: 0;
+	margin: 0;
+	padding: 0;
+	font-size: 20px;
+	cursor: pointer;
+	opacity: 0;
+	filter: alpha(opacity=0);
+}
+
+#imageCanvas {
+	border: 1px solid black;	
+}
+
+#canvas-container {
+	margin-top: 5px;
+	margin-bottom: 15px;  	
+}
+
+.row-padded {
+  padding-top: 5px;  
+  padding-bottom: 15px;  
+}
+
+.label-small  {
+	font-size: 12px;	
+}
+
+.preview-canvas {
+	border:1px solid black;
+}
+
+.preview-cell {
+	cursor: pointer;
+	text-align: center;
+	vertical-align: top !important;
+}
+
+.selected-glyph {
+	background-color: #b8b8b8;
+	outline: 2px solid #666;
+}
+
+.metric-control-cell {
+	background-color: #b8b8b8;
+	margin-top: 6px;
+	min-width: 160px;
+}
+
+.metric-control-cell label {
+	color: #000;
+	display: block;
+	font-size: 12px;
+	font-weight: normal;
+	margin-bottom: 4px;
+}
+
+.preview-slider {
+	width: 150px;
+}
+
+.ssba {
+	width: 32px;	
+}
+
+textarea { resize:vertical; }
