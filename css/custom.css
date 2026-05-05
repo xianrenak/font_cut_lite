@@ -287,6 +287,8 @@ input[type="file"] {
 
 .metric-control-cell {
 	background-color: #aeb4bb;
+	box-shadow: 0 6px 16px rgba(0, 0, 0, 0.32);
+	margin-top: 4px;
 	min-width: 160px;
 	padding: 6px;
 	position: absolute;

@@ -358,6 +358,7 @@ function generatePreview() {
       var originX = -minX + 1;
       canvas.width = maxX - minX + 2;
       canvas.height = $scope.charHeight + 2;
+      setPreviewCanvasDisplaySize(canvas, $scope);
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       //context.drawImage(image,sx,sy,swidth,sheight,x,y,width,height);
@@ -385,6 +386,12 @@ function parseMetricValue(value, fallback) {
 
 function getXAdvanceSliderMax($scope) {
   return $scope.charWidth;
+}
+
+function setPreviewCanvasDisplaySize(canvas, $scope) {
+  var scale = 96 / $scope.charWidth;
+  canvas.style.width = Math.round(canvas.width * scale) + "px";
+  canvas.style.height = Math.round(canvas.height * scale) + "px";
 }
 
 function getGlyphLabel(character) {
