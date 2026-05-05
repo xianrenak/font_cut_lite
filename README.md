@@ -12,11 +12,25 @@ Font Cut Lite is a local HTML5 tool for generating AngelCode bitmap font descrip
 - Load a bitmap font sheet from a file picker or a URL query parameter.
 - Configure fixed cell size with `Char Width` and `Char Height`.
 - Enter glyph rows manually, including intentional spaces with preserved leading/trailing whitespace.
+- Paste multiline glyph text, including emoji grapheme clusters such as `🗡️` and `❄️`.
 - Preview each glyph cell with visible labels for spaces.
 - Adjust per-character `xadvance` from the Preview tab with an inline slider.
 - Automatically calculate centered `xoffset` from `xadvance`.
+- Automatically emit conservative kerning pairs in FNT and XML output.
 - Persist editor state in `localStorage` so refreshes keep glyph rows, dimensions, padding, output type, and metrics.
 - Run fully locally with vendored browser dependencies.
+
+## Automatic Kerning
+
+Kerning amounts are based on the average current `xadvance`:
+
+```text
+strong = -round(avg_xadvance * 0.14)
+medium = -round(avg_xadvance * 0.10)
+light  = -round(avg_xadvance * 0.06)
+```
+
+Only pairs whose characters exist in the current glyph text are emitted.
 
 ## Running Locally
 
@@ -66,4 +80,5 @@ nopqrstuvwxyz
 !@#$%^&*()?
 +-=_|/\<>~
 []{};:'"`,.
+😀😂😎❤️🔥⭐⚡🎯🗡️❄️
 ```

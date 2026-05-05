@@ -36,10 +36,11 @@ fontcutterApp.controller('fontcutterCtrl', function ($scope) {
 
   $scope.selectGlyph = function(lineIndex, charIndex) {
     var metric = getGlyphMetric($scope, lineIndex, charIndex);
+    var glyphs = getLineGlyphs($scope.lineData[lineIndex]);
     $scope.selectedGlyph = {
       lineIndex: lineIndex,
       charIndex: charIndex,
-      character: $scope.lineData[lineIndex].glyphs[charIndex],
+      character: glyphs[charIndex],
       xadvance: metric.xadvance
     };
     generatePreview();
@@ -172,7 +173,7 @@ function clearInvalidSelection($scope) {
   }
 
   var line = $scope.lineData[$scope.selectedGlyph.lineIndex];
-  if (!line || $scope.selectedGlyph.charIndex >= line.glyphs.length) {
+  if (!line || $scope.selectedGlyph.charIndex >= getLineGlyphs(line).length) {
     $scope.selectedGlyph = null;
   }
 }
@@ -220,10 +221,15 @@ CanvasManager.prototype.loadImageFromUrl = function() {
     $('.nav li.disabled').removeClass('disabled');
   };
 
-  image.src = imageUrl;
+  image.src = appendCacheBuster(imageUrl);
   imagePath = imageUrl;
   fileName = {name: imageUrl.split('/').pop()};
 };
+
+function appendCacheBuster(url) {
+  var separator = url.indexOf("?") === -1 ? "?" : "&";
+  return url + separator + "_=" + new Date().getTime();
+}
 
 CanvasManager.prototype.refresh = function() {
   if (fileName != "") {    
@@ -277,7 +283,7 @@ CanvasManager.prototype.refreshCanvas = function() {
     var lineData = angularScope.lineData[i];
     origX = 0;    
     origY = i * angularScope.charHeight;
-    glyphsNumber = lineData.glyphs.length;
+    glyphsNumber = getLineGlyphs(lineData).length;
 
     this.line(origX, origY, glyphsNumber * angularScope.charWidth, origY, "#aaa");
 
@@ -310,10 +316,11 @@ function generatePreview() {
   for (var i = 0; i < $scope.lineData.length; i++) {
     content += "<tr>";
     var lineDataEntry = $scope.lineData[i];
-    for (var j = 0; j < lineDataEntry.glyphs.length; j++) {
+    var glyphs = getLineGlyphs(lineDataEntry);
+    for (var j = 0; j < glyphs.length; j++) {
       var canvasId = "canvas_"+i+"_"+j;
       var selectedClass = isSelectedGlyph($scope, i, j) ? " selected-glyph" : "";
-      content += "<td class='preview-cell"+selectedClass+"' data-line='"+i+"' data-char='"+j+"'><div>"+getGlyphLabel(lineDataEntry.glyphs[j])+"</div><canvas class='preview-canvas' id='"+canvasId+"'></canvas>";
+      content += "<td class='preview-cell"+selectedClass+"' data-line='"+i+"' data-char='"+j+"'><div>"+getGlyphLabel(glyphs[j])+"</div><canvas class='preview-canvas' id='"+canvasId+"'></canvas>";
       if (isSelectedGlyph($scope, i, j)) {
         content += "<div class='metric-control-cell'><label for='xadvance-preview'>X Advance: "+$scope.selectedGlyph.xadvance+"</label><input id='xadvance-preview' class='form-control preview-slider' type='range' min='0' max='"+getXAdvanceSliderMax($scope)+"' step='1' value='"+$scope.selectedGlyph.xadvance+"' /></div>";
       }
@@ -341,7 +348,8 @@ function generatePreview() {
 
   for (var i = 0; i < $scope.lineData.length; i++) {
     var lineDataEntry = $scope.lineData[i];
-    for (var j = 0; j < lineDataEntry.glyphs.length; j++) {
+    var glyphs = getLineGlyphs(lineDataEntry);
+    for (var j = 0; j < glyphs.length; j++) {
       var canvasId = "canvas_"+i+"_"+j;
       var canvas = document.getElementById(canvasId);
       drawPreviewGlyph(canvas, $scope, i, j);
@@ -403,6 +411,53 @@ function drawPreviewGlyph(canvas, $scope, lineIndex, charIndex) {
 function parseMetricValue(value, fallback) {
   var parsed = parseInt(value, 10);
   return isNaN(parsed) ? fallback : parsed;
+}
+
+function getLineGlyphs(lineData) {
+  var text = lineData.glyphs || "";
+  if (window.Intl && Intl.Segmenter) {
+    var segmenter = new Intl.Segmenter(undefined, {granularity: "grapheme"});
+    var glyphs = [];
+    var segments = segmenter.segment(text);
+    for (var segment of segments) {
+      glyphs.push(segment.segment);
+    }
+    return glyphs;
+  }
+
+  return splitGraphemesFallback(text);
+}
+
+function splitGraphemesFallback(text) {
+  var codePoints = Array.from(text);
+  var glyphs = [];
+
+  for (var i = 0; i < codePoints.length; i++) {
+    var glyph = codePoints[i];
+
+    while (i + 1 < codePoints.length && isCombiningEmojiPart(codePoints[i + 1])) {
+      glyph += codePoints[i + 1];
+      i++;
+
+      if (codePoints[i] === "\u200d" && i + 1 < codePoints.length) {
+        glyph += codePoints[i + 1];
+        i++;
+      }
+    }
+
+    glyphs.push(glyph);
+  }
+
+  return glyphs;
+}
+
+function isCombiningEmojiPart(character) {
+  var codePoint = character.codePointAt(0);
+  return codePoint === 0xfe0e ||
+    codePoint === 0xfe0f ||
+    codePoint === 0x200d ||
+    (codePoint >= 0x1f3fb && codePoint <= 0x1f3ff) ||
+    (codePoint >= 0xe0100 && codePoint <= 0xe01ef);
 }
 
 function getXAdvanceSliderMax($scope) {
@@ -484,7 +539,7 @@ function generateXMLOutput($scope) {
 
   var count = 0;
   for (var i = 0; i <  $scope.lineData.length; i++) {
-    count += $scope.lineData[i].glyphs.length;
+    count += getLineGlyphs($scope.lineData[i]).length;
   };
 
   output += '<font>'+EOL;
@@ -496,18 +551,25 @@ function generateXMLOutput($scope) {
   output += TAB + '<chars count="'+count+'">'+EOL;
 
   for(var line=0; line < $scope.lineData.length; line++) {
-    for (var i = 0; i < $scope.lineData[line].glyphs.length; i++) {
-      var character = $scope.lineData[line].glyphs[i];      
+    var glyphs = getLineGlyphs($scope.lineData[line]);
+    for (var i = 0; i < glyphs.length; i++) {
+      var character = glyphs[i];
       var width = $scope.charWidth;
       var height = $scope.charHeight;
       var x = i*width;
       var y = line*height;
       var metric = getGlyphMetric($scope, line, i);
-      output += TAB + TAB + '<char id="'+character.charCodeAt(0)+'"   x="'+x+'"    y="'+y+'"     width="'+width+'"    height="'+height+'" xoffset="'+metric.xoffset+'"     yoffset="0"     xadvance="'+metric.xadvance+'"    page="0"  chnl="0" />'+EOL;
+      output += TAB + TAB + '<char id="'+character.codePointAt(0)+'"   x="'+x+'"    y="'+y+'"     width="'+width+'"    height="'+height+'" xoffset="'+metric.xoffset+'"     yoffset="0"     xadvance="'+metric.xadvance+'"    page="0"  chnl="0" />'+EOL;
     }   
   }
 
   output += TAB + '</chars>'+EOL;
+  var kernings = generateAutoKernings($scope);
+  output += TAB + '<kernings count="'+kernings.length+'">'+EOL;
+  for (var k = 0; k < kernings.length; k++) {
+    output += TAB + TAB + '<kerning first="'+kernings[k].first+'" second="'+kernings[k].second+'" amount="'+kernings[k].amount+'" />'+EOL;
+  }
+  output += TAB + '</kernings>'+EOL;
   output += '</font>';
 
   $('#output').val(output);
@@ -522,7 +584,7 @@ function generateFNTOutput($scope) {
 
   var count = 0;
   for (var i = 0; i <  $scope.lineData.length; i++) {
-    count += $scope.lineData[i].glyphs.length;
+    count += getLineGlyphs($scope.lineData[i]).length;
   };
     
 
@@ -532,18 +594,106 @@ function generateFNTOutput($scope) {
   output += "chars count="+count+EOL;
 
   for(var line=0; line < $scope.lineData.length; line++) {
-    for (var i = 0; i < $scope.lineData[line].glyphs.length; i++) {
-      var character = $scope.lineData[line].glyphs[i];      
+    var glyphs = getLineGlyphs($scope.lineData[line]);
+    for (var i = 0; i < glyphs.length; i++) {
+      var character = glyphs[i];
       var width = $scope.charWidth;
       var height = $scope.charHeight;
       var x = i*width;
       var y = line*height;
       var metric = getGlyphMetric($scope, line, i);
-      output += "char id="+character.charCodeAt(0)+"   x="+x+"    y="+y+"     width="+width+"    height="+height+" xoffset="+metric.xoffset+"     yoffset=0     xadvance="+metric.xadvance+"    page=0  chnl=0"+EOL;
+      output += "char id="+character.codePointAt(0)+"   x="+x+"    y="+y+"     width="+width+"    height="+height+" xoffset="+metric.xoffset+"     yoffset=0     xadvance="+metric.xadvance+"    page=0  chnl=0"+EOL;
     }   
   }
 
+  var kernings = generateAutoKernings($scope);
+  output += "kernings count="+kernings.length+EOL;
+  for (var k = 0; k < kernings.length; k++) {
+    output += "kerning first="+kernings[k].first+" second="+kernings[k].second+" amount="+kernings[k].amount+EOL;
+  }
+
   $('#output').val(output);
+}
+
+function generateAutoKernings($scope) {
+  var levels = getKerningLevels($scope);
+  var pairs = [];
+
+  addKerningPairs(pairs, getKerningPairRules().strong, levels.strong);
+  addKerningPairs(pairs, getKerningPairRules().medium, levels.medium);
+  addKerningPairs(pairs, getKerningPairRules().light, levels.light);
+
+  return filterAvailableKerningPairs(pairs, getAvailableCharacterCodes($scope));
+}
+
+function getKerningLevels($scope) {
+  var avgXAdvance = getAverageXAdvance($scope);
+  return {
+    strong: -Math.round(avgXAdvance * 0.14),
+    medium: -Math.round(avgXAdvance * 0.10),
+    light: -Math.round(avgXAdvance * 0.06)
+  };
+}
+
+function getAverageXAdvance($scope) {
+  var total = 0;
+  var count = 0;
+
+  for (var line = 0; line < $scope.lineData.length; line++) {
+    var glyphs = getLineGlyphs($scope.lineData[line]);
+    for (var i = 0; i < glyphs.length; i++) {
+      total += getGlyphMetric($scope, line, i).xadvance;
+      count++;
+    }
+  }
+
+  return count ? total / count : $scope.charWidth;
+}
+
+function getKerningPairRules() {
+  return {
+    strong: ["AV", "AW", "AY", "VA", "YA"],
+    medium: ["Ta", "Te", "To", "Tu", "Ty", "Ya", "Ye", "Yo", "Yu", "Va", "Ve", "Vo", "WA"],
+    light: ["AT", "TA", "Wa", "We", "Wo", "FA", "Fa", "Fe", "Fo", "LT", "LV", "LW", "LY", "PA"]
+  };
+}
+
+function addKerningPairs(pairs, pairRules, amount) {
+  for (var i = 0; i < pairRules.length; i++) {
+    pairs.push({
+      first: pairRules[i].charCodeAt(0),
+      second: pairRules[i].charCodeAt(1),
+      amount: amount
+    });
+  }
+}
+
+function getAvailableCharacterCodes($scope) {
+  var result = {};
+  for (var line = 0; line < $scope.lineData.length; line++) {
+    var glyphs = getLineGlyphs($scope.lineData[line]);
+    for (var i = 0; i < glyphs.length; i++) {
+      result[glyphs[i].codePointAt(0)] = true;
+    }
+  }
+
+  return result;
+}
+
+function filterAvailableKerningPairs(pairs, availableCodes) {
+  var result = [];
+  var seen = {};
+
+  for (var i = 0; i < pairs.length; i++) {
+    var pair = pairs[i];
+    var key = pair.first + ":" + pair.second;
+    if (availableCodes[pair.first] && availableCodes[pair.second] && !seen[key]) {
+      result.push(pair);
+      seen[key] = true;
+    }
+  }
+
+  return result;
 }
 
 
