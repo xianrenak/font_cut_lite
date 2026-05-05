@@ -37,7 +37,7 @@
 		<ul class="nav nav-pills"  id="tabs" >
 			<li class="active"><a href="#fixedFontTab" data-toggle="tab">Font Settings</a></li>
 			<li class="disabled"><a href="#previewTab" data-toggle="tab" onclick="generatePreview();">Preview</a></li>
-			<li class="disabled"><a href="#outputTab" data-toggle="tab"  onclick="generateOutput();">Ouput</a></li>
+			<li class="disabled"><a href="#outputTab" data-toggle="tab"  onclick="generateOutput();">Output</a></li>
 		</ul>
 
 
@@ -83,7 +83,7 @@
 				
 				<div class="glyph-text-field">
 					<label for="glyphText">List of glyphs</label>
-					<textarea id="glyphText" class="form-control" rows="8" ng-model="glyphText" ng-trim="false" ng-change="onGlyphTextChange()"></textarea>
+					<textarea id="glyphText" class="form-control" rows="8" ng-model="glyphText" ng-trim="false" ng-change="onGlyphTextChange()" spellcheck="false" autocorrect="off" autocapitalize="off"></textarea>
 				</div>
 				
 			</div>
@@ -94,7 +94,7 @@
 			</div>
 
 			<div id="outputTab" class="tab-pane">
-				<textarea name="output" id="output" class="form-control" rows="40"></textarea>
+				<textarea name="output" id="output" class="form-control" rows="40" spellcheck="false" autocorrect="off" autocapitalize="off"></textarea>
 			</div> 
 		</div><!-- /tabContent -->
 
