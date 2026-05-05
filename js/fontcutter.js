@@ -330,16 +330,13 @@ function generatePreview() {
       $scope.selectGlyph(lineIndex, charIndex);
     });
   });
-  $('#xadvance-preview').on('click mousedown mouseup', function(e) {
+  $('#xadvance-preview').on('click mousedown mouseup input change', function(e) {
     e.stopPropagation();
   });
-  $('#xadvance-preview').on('change', function(e) {
+  $('#xadvance-preview').on('input change', function(e) {
     e.stopPropagation();
     var value = parseMetricValue($(this).val(), $scope.charWidth);
-    $scope.$apply(function() {
-      $scope.selectedGlyph.xadvance = value;
-      $scope.onSelectedMetricChange();
-    });
+    updateSelectedGlyphMetric($scope, value);
   });
 
   for (var i = 0; i < $scope.lineData.length; i++) {
@@ -347,36 +344,60 @@ function generatePreview() {
     for (var j = 0; j < lineDataEntry.glyphs.length; j++) {
       var canvasId = "canvas_"+i+"_"+j;
       var canvas = document.getElementById(canvasId);
-      var ctx = canvas.getContext('2d');
-      var metric = getGlyphMetric($scope, i, j);
-      var xoffset = metric.xoffset;
-      var xadvance = metric.xadvance;
-      var advanceStart = -xoffset;
-      var advanceEnd = -xoffset + xadvance;
-      var minX = Math.min(0, advanceStart, advanceEnd);
-      var maxX = Math.max($scope.charWidth, advanceStart, advanceEnd, 1);
-      var originX = -minX + 1;
-      canvas.width = maxX - minX + 2;
-      canvas.height = $scope.charHeight + 2;
-      setPreviewCanvasDisplaySize(canvas, $scope);
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      //context.drawImage(image,sx,sy,swidth,sheight,x,y,width,height);
-      var sx = j*$scope.charWidth;
-      var sy = i*$scope.charHeight;
-
-      ctx.drawImage(image,sx,sy,$scope.charWidth,$scope.charHeight,originX,1,$scope.charWidth,$scope.charHeight);
-      ctx.strokeStyle = "#428bca";
-      ctx.strokeRect(originX + 0.5, 1.5, $scope.charWidth, $scope.charHeight);
-      ctx.beginPath();
-      ctx.strokeStyle = "#d9534f";
-      ctx.moveTo(originX + advanceStart + 0.5, 0);
-      ctx.lineTo(originX + advanceStart + 0.5, canvas.height);
-      ctx.moveTo(originX + advanceEnd + 0.5, 0);
-      ctx.lineTo(originX + advanceEnd + 0.5, canvas.height);
-      ctx.stroke();
+      drawPreviewGlyph(canvas, $scope, i, j);
     }
   }
+}
+
+function updateSelectedGlyphMetric($scope, xadvance) {
+  if (!$scope.selectedGlyph) {
+    return;
+  }
+
+  $scope.selectedGlyph.xadvance = xadvance;
+  setGlyphMetric($scope, $scope.selectedGlyph.lineIndex, $scope.selectedGlyph.charIndex, {
+    xadvance: xadvance
+  });
+
+  $('#xadvance-preview').siblings('label').text("X Advance: " + xadvance);
+
+  var canvas = document.getElementById("canvas_"+$scope.selectedGlyph.lineIndex+"_"+$scope.selectedGlyph.charIndex);
+  if (canvas) {
+    drawPreviewGlyph(canvas, $scope, $scope.selectedGlyph.lineIndex, $scope.selectedGlyph.charIndex);
+  }
+
+  generateOutput();
+  saveState($scope);
+}
+
+function drawPreviewGlyph(canvas, $scope, lineIndex, charIndex) {
+  var ctx = canvas.getContext('2d');
+  var metric = getGlyphMetric($scope, lineIndex, charIndex);
+  var xoffset = metric.xoffset;
+  var xadvance = metric.xadvance;
+  var advanceStart = -xoffset;
+  var advanceEnd = -xoffset + xadvance;
+  var minX = Math.min(0, advanceStart, advanceEnd);
+  var maxX = Math.max($scope.charWidth, advanceStart, advanceEnd, 1);
+  var originX = -minX + 1;
+  canvas.width = maxX - minX + 2;
+  canvas.height = $scope.charHeight + 2;
+  setPreviewCanvasDisplaySize(canvas, $scope);
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  var sx = charIndex*$scope.charWidth;
+  var sy = lineIndex*$scope.charHeight;
+
+  ctx.drawImage(image,sx,sy,$scope.charWidth,$scope.charHeight,originX,1,$scope.charWidth,$scope.charHeight);
+  ctx.strokeStyle = "#428bca";
+  ctx.strokeRect(originX + 0.5, 1.5, $scope.charWidth, $scope.charHeight);
+  ctx.beginPath();
+  ctx.strokeStyle = "#d9534f";
+  ctx.moveTo(originX + advanceStart + 0.5, 0);
+  ctx.lineTo(originX + advanceStart + 0.5, canvas.height);
+  ctx.moveTo(originX + advanceEnd + 0.5, 0);
+  ctx.lineTo(originX + advanceEnd + 0.5, canvas.height);
+  ctx.stroke();
 }
 
 function parseMetricValue(value, fallback) {
