@@ -65,11 +65,12 @@ tests/assets/comic_font_img.png
 Suggested settings for this image:
 
 ```text
-Char Width: 144
+Char Width: 160
 Char Height: 196
 ```
 
 Paste this glyph text into `List of glyphs`:
+(including a space)
 
 ```text
 ABCDEFGHIJKLM
@@ -80,5 +81,5 @@ nopqrstuvwxyz
 !@#$%^&*()?
 +-=_|/\<>~
 []{};:'"`,.
-😀😂😎❤️🔥⭐⚡🎯🗡️❄️
+⚔️🗡️🏹🛡️🪄🎯💥💀▲▼◀▶↑↓←→
 ```
