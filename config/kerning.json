@@ -1,0 +1,12 @@
+{
+  "levels": {
+    "strong": 0.14,
+    "medium": 0.10,
+    "light": 0.06
+  },
+  "pairs": {
+    "strong": ["AV", "AW", "AY", "VA", "YA", "FA", "Fa", "Fe", "Fo"],
+    "medium": ["AT", "TA", "Ta", "Te", "To", "Tu", "Ty", "Ya", "Ye", "Yo", "Yu", "Va", "Ve", "Vo", "WA","PA"],
+    "light": ["Wa", "We", "Wo", "LT", "LV", "LW", "LY"]
+  }
+}

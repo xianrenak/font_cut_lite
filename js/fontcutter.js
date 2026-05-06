@@ -5,6 +5,7 @@ var image = new Image();
 var fileName = "";
 var storageKey = "fontcutter-edit-state";
 var imagePath = "";
+var kerningConfig = getDefaultKerningConfig();
 
 fontcutterApp.controller('fontcutterCtrl', function ($scope) { 
   $scope.outputXML = false;
@@ -22,6 +23,8 @@ fontcutterApp.controller('fontcutterCtrl', function ($scope) {
   ];
   $scope.lineNumber = $scope.lineData.length;
   $scope.glyphText = lineDataToGlyphText($scope.lineData);
+  $scope.previewText = getDefaultPreviewText();
+  $scope.textPreviewVisible = true;
   $scope.selectedGlyph = null;
 
   loadSavedState($scope);
@@ -31,6 +34,21 @@ fontcutterApp.controller('fontcutterCtrl', function ($scope) {
     $scope.lineNumber = $scope.lineData.length;
     clearInvalidSelection($scope);
     canvasManager.refresh();
+    saveState($scope);
+  }
+
+  $scope.onPreviewTextChange = function() {
+    renderTextPreview($scope);
+    saveState($scope);
+  }
+
+  $scope.toggleTextPreview = function() {
+    $scope.textPreviewVisible = !$scope.textPreviewVisible;
+    if ($scope.textPreviewVisible) {
+      setTimeout(function() {
+        renderTextPreview($scope);
+      }, 0);
+    }
     saveState($scope);
   }
 
@@ -83,6 +101,53 @@ fontcutterApp.controller('fontcutterCtrl', function ($scope) {
    
 });
 
+function loadKerningConfig() {
+  $.getJSON("config/kerning.json")
+    .done(function(config) {
+      kerningConfig = normalizeKerningConfig(config);
+      generateOutput();
+      renderTextPreview(angular.element($("#body")).scope());
+    })
+    .fail(function() {
+      kerningConfig = getDefaultKerningConfig();
+    });
+}
+
+function normalizeKerningConfig(config) {
+  var defaults = getDefaultKerningConfig();
+  config = config || {};
+  config.levels = config.levels || {};
+  config.pairs = config.pairs || {};
+
+  return {
+    levels: {
+      strong: parseFloat(config.levels.strong) || defaults.levels.strong,
+      medium: parseFloat(config.levels.medium) || defaults.levels.medium,
+      light: parseFloat(config.levels.light) || defaults.levels.light
+    },
+    pairs: {
+      strong: config.pairs.strong || defaults.pairs.strong,
+      medium: config.pairs.medium || defaults.pairs.medium,
+      light: config.pairs.light || defaults.pairs.light
+    }
+  };
+}
+
+function getDefaultKerningConfig() {
+  return {
+    levels: {
+      strong: 0.14,
+      medium: 0.10,
+      light: 0.06
+    },
+    pairs: {
+      strong: ["AV", "AW", "AY", "VA", "YA"],
+      medium: ["Ta", "Te", "To", "Tu", "Ty", "Ya", "Ye", "Yo", "Yu", "Va", "Ve", "Vo", "WA"],
+      light: ["AT", "TA", "Wa", "We", "Wo", "FA", "Fa", "Fe", "Fo", "LT", "LV", "LW", "LY", "PA"]
+    }
+  };
+}
+
 function loadSavedState($scope) {
   if (getQueryParameter("reset") === "1") {
     localStorage.removeItem(storageKey);
@@ -114,6 +179,14 @@ function loadSavedState($scope) {
       $scope.glyphText = state.glyphText || lineDataToGlyphText($scope.lineData);
     }
 
+    if (state.previewText !== undefined) {
+      $scope.previewText = state.previewText;
+    }
+
+    if (state.textPreviewVisible !== undefined) {
+      $scope.textPreviewVisible = state.textPreviewVisible;
+    }
+
     if (state.fileName) {
       fileName = {name: state.fileName};
       imagePath = state.imagePath || "";
@@ -134,6 +207,8 @@ function saveState($scope) {
     leftPadding: $scope.leftPadding,
     rightPadding: $scope.rightPadding,
     glyphText: $scope.glyphText,
+    previewText: $scope.previewText,
+    textPreviewVisible: $scope.textPreviewVisible,
     lineData: $scope.lineData,
     fileName: fileName ? fileName.name : "",
     imagePath: imagePath
@@ -149,6 +224,35 @@ function lineDataToGlyphText(lineData) {
   }
 
   return lines.join("\n");
+}
+
+function getDefaultPreviewText() {
+  return [
+    "ABCDEFGHIJKLM",
+    "NOPQRSTUVWXYZ",
+    "abcdefghijklm",
+    "nopqrstuvwxyz",
+    "0123456789",
+    "!@#$%^&*()?",
+    "+-=_|/\\<>~",
+    "[]{};::'\"`,.",
+    "------------",
+    "AV AW AY AT TA Ta Te",
+    "To Tu Ty VA Va Ve Vo",
+    "WA Wa We Wo YA Ya",
+    "Ye Yo Yu FA Fa Fe Fo",
+    "LA LT LV LW LY PA",
+    "------------",
+    "The quick brown fox",
+    "jumps over the lazy dog",
+    "------------",
+    "⚔️🗡️🏹🛡️🪄🎯💥💀▲▼◀▶↑↓←→",
+    "🔥⚡❄️💧🌿☀️🌙⭐⏰🎵⏻👍👎🔧⚙️🔔",
+    "💎🪙📦⛏️🧪❤️🩹💔🏠🚪👤💾🗑️💬🔍📞",
+    "🔒🔓🔑❗❓🕹️🏆👑🔊🔇✔️❌↩️↪️🔄🚫",
+    "⚓🚢🚗✈️🚀🏃🧭🗺️⏸️▶️⏹️⏩⏪👻👽🦖",
+    "🍎🍞🍖☕🍺💊"
+  ].join("\n");
 }
 
 function glyphTextToLineData(glyphText, oldLineData) {
@@ -309,6 +413,7 @@ function generatePreview() {
   var $scope = angular.element($("#body")).scope();
   
   var canvasArray = [];
+  renderTextPreview($scope);
 
   var table = $('#previewTable');
   table.empty();
@@ -374,6 +479,7 @@ function updateSelectedGlyphMetric($scope, xadvance) {
     drawPreviewGlyph(canvas, $scope, $scope.selectedGlyph.lineIndex, $scope.selectedGlyph.charIndex);
   }
 
+  renderTextPreview($scope);
   generateOutput();
   saveState($scope);
 }
@@ -406,6 +512,141 @@ function drawPreviewGlyph(canvas, $scope, lineIndex, charIndex) {
   ctx.moveTo(originX + advanceEnd + 0.5, 0);
   ctx.lineTo(originX + advanceEnd + 0.5, canvas.height);
   ctx.stroke();
+}
+
+function renderTextPreview($scope) {
+  var canvas = document.getElementById("textPreviewCanvas");
+  if (!canvas || !image.width) {
+    return;
+  }
+
+  var glyphMap = buildGlyphMap($scope);
+  var lines = splitPreviewLines($scope.previewText || "");
+  var scale = 48 / $scope.charWidth;
+  var padding = 14;
+  var lineHeight = Math.ceil($scope.charHeight * scale);
+  var width = 1;
+  var kernings = buildKerningMap(generateAutoKernings($scope));
+
+  for (var lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+    width = Math.max(width, measurePreviewLine(lines[lineIndex], glyphMap, kernings, $scope, scale));
+  }
+
+  canvas.width = Math.max(1, Math.ceil(width + padding * 2));
+  canvas.height = Math.max(1, Math.ceil(lines.length * lineHeight + padding * 2));
+
+  var ctx = canvas.getContext("2d");
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "#1b2026";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  for (var i = 0; i < lines.length; i++) {
+    drawPreviewTextLine(ctx, lines[i], glyphMap, kernings, $scope, scale, padding, padding + i * lineHeight);
+  }
+}
+
+function splitPreviewLines(text) {
+  return String(text || "").replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
+}
+
+function measurePreviewLine(text, glyphMap, kernings, $scope, scale) {
+  var glyphs = splitGlyphText(text);
+  var width = 0;
+  var previousGlyph = null;
+
+  for (var i = 0; i < glyphs.length; i++) {
+    var glyphInfo = glyphMap[getGlyphKey(glyphs[i])];
+    if (!glyphInfo) {
+      width += getMissingGlyphAdvance($scope, scale);
+      previousGlyph = null;
+      continue;
+    }
+
+    width += getKerningAmount(kernings, previousGlyph, glyphs[i]) * scale;
+    width += glyphInfo.metric.xadvance * scale;
+    previousGlyph = glyphs[i];
+  }
+
+  return width;
+}
+
+function drawPreviewTextLine(ctx, text, glyphMap, kernings, $scope, scale, x, y) {
+  var glyphs = splitGlyphText(text);
+  var penX = x;
+  var previousGlyph = null;
+
+  for (var i = 0; i < glyphs.length; i++) {
+    var currentGlyph = glyphs[i];
+    var info = glyphMap[getGlyphKey(currentGlyph)];
+    if (!info) {
+      penX += getMissingGlyphAdvance($scope, scale);
+      previousGlyph = null;
+      continue;
+    }
+
+    penX += getKerningAmount(kernings, previousGlyph, currentGlyph) * scale;
+    ctx.drawImage(
+      image,
+      info.charIndex * $scope.charWidth,
+      info.lineIndex * $scope.charHeight,
+      $scope.charWidth,
+      $scope.charHeight,
+      Math.round(penX + info.metric.xoffset * scale),
+      y,
+      Math.round($scope.charWidth * scale),
+      Math.round($scope.charHeight * scale)
+    );
+    penX += info.metric.xadvance * scale;
+    previousGlyph = currentGlyph;
+  }
+}
+
+function getMissingGlyphAdvance($scope, scale) {
+  return Math.round($scope.charWidth * 0.5 * scale);
+}
+
+function buildGlyphMap($scope) {
+  var result = {};
+  for (var line = 0; line < $scope.lineData.length; line++) {
+    var glyphs = getLineGlyphs($scope.lineData[line]);
+    for (var i = 0; i < glyphs.length; i++) {
+      var key = getGlyphKey(glyphs[i]);
+      if (!result[key]) {
+        result[key] = {
+          lineIndex: line,
+          charIndex: i,
+          metric: getGlyphMetric($scope, line, i)
+        };
+      }
+    }
+  }
+
+  return result;
+}
+
+function splitGlyphText(text) {
+  return getLineGlyphs({glyphs: text});
+}
+
+function getGlyphKey(glyph) {
+  return glyph.codePointAt(0);
+}
+
+function buildKerningMap(kernings) {
+  var result = {};
+  for (var i = 0; i < kernings.length; i++) {
+    result[kernings[i].first + ":" + kernings[i].second] = kernings[i].amount;
+  }
+
+  return result;
+}
+
+function getKerningAmount(kernings, firstGlyph, secondGlyph) {
+  if (!firstGlyph || !secondGlyph) {
+    return 0;
+  }
+
+  return kernings[getGlyphKey(firstGlyph) + ":" + getGlyphKey(secondGlyph)] || 0;
 }
 
 function parseMetricValue(value, fallback) {
@@ -629,9 +870,9 @@ function generateAutoKernings($scope) {
 function getKerningLevels($scope) {
   var avgXAdvance = getAverageXAdvance($scope);
   return {
-    strong: -Math.round(avgXAdvance * 0.14),
-    medium: -Math.round(avgXAdvance * 0.10),
-    light: -Math.round(avgXAdvance * 0.06)
+    strong: -Math.round(avgXAdvance * kerningConfig.levels.strong),
+    medium: -Math.round(avgXAdvance * kerningConfig.levels.medium),
+    light: -Math.round(avgXAdvance * kerningConfig.levels.light)
   };
 }
 
@@ -651,11 +892,7 @@ function getAverageXAdvance($scope) {
 }
 
 function getKerningPairRules() {
-  return {
-    strong: ["AV", "AW", "AY", "VA", "YA"],
-    medium: ["Ta", "Te", "To", "Tu", "Ty", "Ya", "Ye", "Yo", "Yu", "Va", "Ve", "Vo", "WA"],
-    light: ["AT", "TA", "Wa", "We", "Wo", "FA", "Fa", "Fe", "Fo", "LT", "LV", "LW", "LY", "PA"]
-  };
+  return kerningConfig.pairs;
 }
 
 function addKerningPairs(pairs, pairRules, amount) {
@@ -702,6 +939,7 @@ var canvasManager = new CanvasManager();
 
 
 $(document).ready(function() {
+    loadKerningConfig();
     /*disable non active tabs*/
     $('.nav li').not('.active').addClass('disabled');
 /*to actually disable clicking the bootstrap tab, as noticed in comments by user3067524*/

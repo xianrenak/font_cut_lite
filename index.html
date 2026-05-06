@@ -9,6 +9,16 @@
 
 <body id="body" ng-controller="fontcutterCtrl">
 	<div class="container">
+		<button id="textPreviewToggle" class="btn btn-default text-preview-toggle" type="button" ng-click="toggleTextPreview()">
+			{{textPreviewVisible ? 'Hide Preview' : 'Show Preview'}}
+		</button>
+		<div class="text-preview-panel" ng-show="textPreviewVisible">
+			<label for="textPreviewInput">Text Preview</label>
+			<textarea id="textPreviewInput" class="form-control" rows="10" ng-model="previewText" ng-trim="false" ng-change="onPreviewTextChange()" spellcheck="false" autocorrect="off" autocapitalize="off"></textarea>
+			<div class="text-preview-canvas-wrap">
+				<canvas id="textPreviewCanvas"></canvas>
+			</div>
+		</div>
 
 		<!-- ***************************************** Nav Bar ***************************************** -->
 		<div class="navbar navbar-default">

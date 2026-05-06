@@ -252,6 +252,56 @@ input[type="file"] {
 	table-layout: auto;
 }
 
+.text-preview-panel {
+	background: #252b31;
+	border: 1px solid #171a1e;
+	border-radius: 4px;
+	box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+	max-width: 640px;
+	padding: 14px;
+	position: fixed;
+	right: 18px;
+	top: 64px;
+	width: 50%;
+	z-index: 20;
+}
+
+.text-preview-toggle {
+	position: fixed;
+	right: 18px;
+	top: 18px;
+	z-index: 21;
+}
+
+.text-preview-panel label {
+	color: #dce3ea;
+	display: block;
+	font-size: 13px;
+	font-weight: 700;
+	margin-bottom: 8px;
+}
+
+.text-preview-canvas-wrap {
+	background: #1b2026;
+	border: 1px solid #111418;
+	border-radius: 4px;
+	max-height: 360px;
+	margin-top: 10px;
+	overflow: auto;
+	padding: 10px;
+}
+
+#textPreviewCanvas {
+	display: block;
+	max-width: none;
+}
+
+#textPreviewInput {
+	font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+	min-height: 148px;
+	resize: vertical;
+}
+
 #previewTable > tbody > tr > td {
 	border-top: 1px solid #22272d;
 	padding: 8px;
@@ -328,5 +378,17 @@ input[type="file"] {
 
 	.option-row {
 		padding-right: 0;
+	}
+
+	.text-preview-panel {
+		left: 12px;
+		right: 12px;
+		position: static;
+		width: auto;
+	}
+
+	.text-preview-toggle {
+		position: static;
+		margin-bottom: 10px;
 	}
 }
