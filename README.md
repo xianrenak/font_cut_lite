@@ -1,7 +1,7 @@
-Font Cut Lite
+FontCutLite
 =============
 
-Font Cut Lite is a local HTML5 tool for generating AngelCode bitmap font descriptors from an existing fixed-grid bitmap font image. It can export both plain `.fnt` text and XML descriptors for use in game engines and UI pipelines.
+FontCutLite is a local HTML5 tool for generating AngelCode bitmap font descriptors from an existing fixed-grid bitmap font image. It can export both plain `.fnt` text and XML descriptors for use in game engines and UI pipelines.
 
 ![Font Cut Lite screenshot](docs/images/font-cut-lite-screenshot.png)
 
