@@ -1,5 +1,7 @@
 # FontCutLite
 
+[English](README_EN.md) | 简体中文
+
 FontCutLite 是一个本地运行的 HTML5 位图字体切图工具，可将固定网格的字体图片转换为 AngelCode `.fnt` 或 XML 描述文件，适合 Godot 等游戏引擎中的位图字体工作流。
 
 [![GitHub license](https://img.shields.io/github/license/xianrenak/font_cut_lite)](https://github.com/xianrenak/font_cut_lite/blob/main/LICENSE)
